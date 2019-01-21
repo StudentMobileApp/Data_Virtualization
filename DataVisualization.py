@@ -100,6 +100,13 @@ class CenterFrame(tk.Frame):
         totalY = 0
         currentClass = 1
         xLength = len(self.values)  # Rows
+        
+        fig = plt.Figure()
+        a = fig.add_subplot(111)  # .plot(x, y) # 1 by 1, graph #1?
+        a.set_title("Collocated Paired Coordinates")
+        a.set_xlabel('x')
+        a.set_ylabel('y')
+        
         for i in range(1, (xLength - 1)):  # 1- 6
             yLength = len(self.values[i])  # Columns
             for j in range(1, (yLength - 1)):
@@ -111,7 +118,7 @@ class CenterFrame(tk.Frame):
                         totalY = float(self.values[i][j]) + float(totalY)  # Total  distance y
                         yCoords.append(float(totalY))
                 else:
-                    plt.plot(xCoords, yCoords)
+                    a.plot(xCoords, yCoords)
                     print("Class: ", currentClass, " CPC values...")  # Printing for our use
                     for m in range(len(xCoords)):
                         print("(" + str(xCoords[m]) + "," + str(yCoords[m]) + ")")
@@ -122,11 +129,6 @@ class CenterFrame(tk.Frame):
                     currentClass = currentClass + 1
                     xCoords.append(float(self.values[i][j]))  # Append the first X-coord of class
 
-        fig = plt.Figure()
-        a = fig.add_subplot(111)  # .plot(x, y) # 1 by 1, graph #1?
-        a.set_title("Collocated Paired Coordinates")
-        a.set_xlabel('x')
-        a.set_ylabel('y')
         a.plot(xCoords, yCoords)
         cpc = FigureCanvasTkAgg(fig, self.ctr_mid)  # A tk.DrawingArea.
         cpc.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -217,4 +219,3 @@ class MainApplication(tk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     MainApplication(root)
-    root.mainloop()
