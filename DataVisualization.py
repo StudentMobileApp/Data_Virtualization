@@ -2,6 +2,8 @@ import tkinter as tk
 import csv
 import matplotlib
 
+from tkinter.filedialog import (askopenfilename, asksaveasfilename)
+
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
@@ -75,25 +77,42 @@ class CenterFrame(tk.Frame):
         self.ctr_mid.grid(row=0, column=1, sticky="nsew")
         self.ctr_right.grid(row=0, column=2, sticky="ns")
 
+    def saveFile(self):
+        file = asksaveasfilename(filetypes=(("PNG Image", "*.png"), ("All Files", "*.*")),
+                              defaultextension='.png', title="Save")
+        if file:
+            plt.savefig(file)
+
+    def openFile(self):
+        self.file = askopenfilename()
+        print(self.file)
+        #show default graph
+        for widget in self.ctr_mid.winfo_children():                # Clears widgets on the frame
+            widget.destroy()
+        for widget in self.bottomFrame.winfo_children():                # Clears widgets on the bottom frame
+            widget.destroy()
+        values = [[]]
+        self.ReadFile1(values,self.file)
+        self.createSeperateSPC(values)
+
+
     def cpcAPI(self):
         for widget in self.ctr_mid.winfo_children():                # Clears widgets on the frame
             widget.destroy()
         for widget in self.bottomFrame.winfo_children():                # Clears widgets on the bottom frame
             widget.destroy()
-        self.values = [[]]
-        self.ReadFile1()
-        self.Output()
-        self.createCPC()
+        values = [[]]
+        self.ReadFile1(values,self.file)
+        self.createCPC(values)
 
     def cpcAPI2(self):
         for widget in self.ctr_mid.winfo_children():                # Clears widgets on the frame
             widget.destroy()
         for widget in self.bottomFrame.winfo_children():                # Clears widgets on the bottom frame
             widget.destroy()
-        self.values = [[]]
-        self.ReadFile1()
-        self.Output()
-        self.createSeperateCPC()
+        values = [[]]
+        self.ReadFile1(values,self.file)
+        self.createSeperateCPC(values)
 
     def spcAPI(self):
         for widget in self.ctr_mid.winfo_children():                # Clears widgets on the frame
@@ -102,19 +121,29 @@ class CenterFrame(tk.Frame):
             widget.destroy()
         self.values = [[]]
         self.ReadFile2()
-        self.Output()
         self.createSPC()
 
-    def ReadFile1(self):  # Reads values into 2d array
-        with open('input.csv', 'r') as csv_file:
+    def spcAPI2(self):
+        plt.close('all')
+        for widget in self.ctr_mid.winfo_children():                # Clears widgets on the frame
+            widget.destroy()
+        for widget in self.bottomFrame.winfo_children():                # Clears widgets on the bottom frame
+            widget.destroy()
+        values = [[]]
+        self.ReadFile1(values,self.file)
+        self.createSeperateSPC(values)
+
+    def ReadFile1(self,values,file):  # Reads values into 2d array
+        with open(file, 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
             count = 0
             for line in csv_reader:
-                self.values.append([])
+                values.append([])
                 line = list(line)
                 for i in line:
-                    self.values[count].append(i)
+                    values[count].append(i)
                 count = count + 1
+        csv_file.close()
 
     def ReadFile2(self):  # Reads values into 2d array
         with open('input2.csv', 'r') as csv_file:
@@ -126,21 +155,16 @@ class CenterFrame(tk.Frame):
                 for i in line:
                     self.values[count].append(i)
                 count = count + 1
+        csv_file.close()
 
-    def Output(self):
-        print("The file contains...")
-        for i in range(len(self.values)):
-            print("");
-            for j in range(len(self.values[i])):
-                currentLine = str(self.values[i][j])
-                print(currentLine, end=" ")
-        print(" ")
+
 
     def setToolbar(self, graph):
         toolbar1 = NavigationToolbar2Tk(graph, self.bottomFrame)
         toolbar1.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     def createSPC(self):
+        values = [row[:] for row in self.values]
         print("")
         print("The matrix has been converted into x and y coordinates")
         ogX = []
@@ -152,18 +176,18 @@ class CenterFrame(tk.Frame):
         totalx = 0
         totaly = 0
 
-        for i in range(len(self.values)):
-            for j in range(len(self.values[i])):
-                if (int(self.values[i][j]) > 0):
+        for i in range(len(values)):
+            for j in range(len(values[i])):
+                if (int(values[i][j]) > 0):
                     if (xNums <= yNums):  # X-values for graph
-                        totalx = int(self.values[i][j]) + int(totalx)  # Total  distance x
+                        totalx = int(values[i][j]) + int(totalx)  # Total  distance x
                         first.append(int(totalx))
-                        ogX.append(int(self.values[i][j]))  # Original x-values (for SPC)
+                        ogX.append(int(values[i][j]))  # Original x-values (for SPC)
                         xNums = xNums + 1
                     else:  # Y-values for graph
-                        totaly = int(self.values[i][j]) + int(totaly)  # Total  distance y
+                        totaly = int(values[i][j]) + int(totaly)  # Total  distance y
                         second.append(int(totaly))
-                        ogY.append(int(self.values[i][j]))  # Original y-values (for SPC)
+                        ogY.append(int(values[i][j]))  # Original y-values (for SPC)
                         yNums = yNums + 1
 
                 else:
@@ -203,13 +227,88 @@ class CenterFrame(tk.Frame):
 
         self.setToolbar(spc)
 
-    def createCPC(self):
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # TASK 5 Part A raw All Graphs in SPC separately
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    def drawSPC(self, currentClass, fig, ogX, ogY):  # Draws the CPC by resizing the figure and creating the graph
+        for currentIndex in range(len(ogX)):
+            n = len(fig.axes)
+
+            for b in range(n):
+                fig.axes[b].change_geometry(currentClass, len(ogX), b + 1)  # Resizing (row, column, position)
+                #print(len(ogX))
+            ax = fig.add_subplot(currentClass, len(ogX), n + 1)
+
+            ax.set_xlabel("X " + str(currentIndex * 2 + 1))  # Styling the graph
+            ax.set_ylabel("X " + str(currentIndex * 2 + 2))
+            if (currentIndex == 0):
+                ax.set_title("SPC for Class: " + str(currentClass))
+            xMin = min(ogX) - 1
+            xMax = max(ogX) + 1
+            yMin = min(ogY) - 1
+            yMax = max(ogY) + 1
+            plt.xlim(float(xMin), float(xMax))
+            plt.ylim(float(yMin), float(yMax))
+            ax.plot(ogX[currentIndex], ogY[currentIndex], 'r')  # Plotting the graph
+            pax = fig.axes[n]
+
+            if (currentIndex > 0):
+                xy = (
+                ogX[currentIndex - 1], ogY[currentIndex - 1])  # These are for original values to be graphed in SPC
+                ab = (ogX[currentIndex], ogY[currentIndex])
+                con = ConnectionPatch(xyA=ab, xyB=xy, coordsA="data", coordsB="data",
+                                      axesA=fig.axes[n], axesB=fig.axes[n - 1], color="purple")
+                pax.add_artist(con)
+                pax.plot(ogX[currentIndex], ogY[currentIndex], 'ro', markersize=10)  # Plot the SPC points on each graph
+            else:
+                pax.plot(ogX[currentIndex], ogY[currentIndex], 'ro', markersize=10)  # Plot the SPC points on each graph
+
+    def createSeperateSPC(self,values):  # Read and process csv values
+        #values = [row[:] for row in self.values]
+        ogX, ogY = [], []
+        currentClass = 1
+        xLength = len(values)  # Number of rows
+        fig = plt.figure(currentClass, figsize=(8, 8))  # Sizing the subplots and spacing
+
+        for i in range(1, (xLength - 1)):  # Exclude IDS from data
+            yLength = len(values[i])  # Number of columns
+            for j in range(1, (yLength - 1)):  # Exclude IDs from data
+                if (int(values[i][yLength - 1]) == currentClass):  # Process each class
+                    if ((len(ogX)) <= (len(ogY))):  # X-values for graph
+                        ogX.append(float(values[i][j]))  # Store the original x-value for graph
+                    else:  # Y-values for graph
+                        ogY.append(float(values[i][j]))  # Store the original y-value for graph
+                else:
+                    self.drawSPC(currentClass, fig, ogX, ogY)  # Draw the CPC
+                    ogX.clear()  # Reset everything for next class
+                    ogY.clear()
+                    currentClass = currentClass + 1
+                    ogX.append(float(values[i][j]))  # Store the first x-value of next class
+
+        self.drawSPC(currentClass, fig, ogX, ogY)  # Draw the last SPC (not included in for loop)
+        fig.subplots_adjust(wspace=1, hspace=0.5)
+        fig.tight_layout()
+        #plt.show()  # Displays the figure
+        dividedSPC = FigureCanvasTkAgg(fig, self.ctr_mid)  # A tk.DrawingArea.
+        dividedSPC.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.setToolbar(dividedSPC)
+
+
+
+
+
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    def createCPC(self,values):
+        #values = [row[:] for row in self.values]
         xCoords = []
         yCoords = []
         totalX = 0
         totalY = 0
         currentClass = 1
-        xLength = len(self.values)  # Rows
+        xLength = len(values)  # Rows
 
         fig = plt.Figure()
         a = fig.add_subplot(111)  # .plot(x, y) # 1 by 1, graph #1?
@@ -218,26 +317,26 @@ class CenterFrame(tk.Frame):
         a.set_ylabel('y')
 
         for i in range(1, (xLength - 1)):  # 1- 6
-            yLength = len(self.values[i])  # Columns
+            yLength = len(values[i])  # Columns
             for j in range(1, (yLength - 1)):
-                if (int(self.values[i][yLength - 1]) == currentClass):
+                if (int(values[i][yLength - 1]) == currentClass):
                     if ((len(xCoords)) <= (len(yCoords))):  # X-values for graph
-                        totalX = float(self.values[i][j]) + float(totalX)  # Total  distance x
+                        totalX = float(values[i][j]) + float(totalX)  # Total  distance x
                         xCoords.append(float(totalX))
                     else:  # Y-values for graph
-                        totalY = float(self.values[i][j]) + float(totalY)  # Total  distance y
+                        totalY = float(values[i][j]) + float(totalY)  # Total  distance y
                         yCoords.append(float(totalY))
                 else:
                     a.plot(xCoords, yCoords)
-                    print("Class: ", currentClass, " CPC values...")  # Printing for our use
-                    for m in range(len(xCoords)):
-                        print("(" + str(xCoords[m]) + "," + str(yCoords[m]) + ")")
+                    #print("Class: ", currentClass, " CPC values...")  # Printing for our use
+                    #for m in range(len(xCoords)):
+                        #print("(" + str(xCoords[m]) + "," + str(yCoords[m]) + ")")
                     xCoords.clear()  # Reset everything for next class
                     yCoords.clear()
                     totalX = 0
                     totalY = 0
                     currentClass = currentClass + 1
-                    xCoords.append(float(self.values[i][j]))  # Append the first X-coord of class
+                    xCoords.append(float(values[i][j]))  # Append the first X-coord of class
 
         a.plot(xCoords, yCoords)
         cpc = FigureCanvasTkAgg(fig, self.ctr_mid)  # A tk.DrawingArea.
@@ -258,23 +357,24 @@ class CenterFrame(tk.Frame):
         ax.set_title("CPC for Class: " + str(currentClass))
         ax.plot(xCoords, yCoords, '--bo')  # Plotting the graph
 
-    def createSeperateCPC(self):  # This is the "core" method of this task. Calculates CPC values and draws the graph
+    def createSeperateCPC(self,values):  # This is the "core" method of this task. Calculates CPC values and draws the graph
+        #values = [row[:] for row in self.values]
         xCoords, yCoords = [], []  # Stores the X and Y coordinates
         totalX, totalY, currentClass = 0, 0, 1
-        xLength = len(self.values)  # Number of rows
+        xLength = len(values)  # Number of rows
 
-        fig = plt.figure(figsize=(7, 7))  # Sizing the subplots and spacing
+        fig = plt.figure()  # Sizing the subplots and spacing
         fig.subplots_adjust(hspace=0.5)
 
         for i in range(1, (xLength - 1)):  # Exclude IDS from data
-            yLength = len(self.values[i])  # Number of columns
+            yLength = len(values[i])  # Number of columns
             for j in range(1, (yLength - 1)):  # Exclude IDs from data
-                if (int(self.values[i][yLength - 1]) == currentClass):  # Process each class
+                if (int(values[i][yLength - 1]) == currentClass):  # Process each class
                     if ((len(xCoords)) <= (len(yCoords))):  # X-values for graph
-                        totalX = float(self.values[i][j]) + float(totalX)
+                        totalX = float(values[i][j]) + float(totalX)
                         xCoords.append(float(totalX))  # Store the current total X distance
                     else:  # Y-values for graph
-                        totalY = float(self.values[i][j]) + float(totalY)
+                        totalY = float(values[i][j]) + float(totalY)
                         yCoords.append(float(totalY))  # Store the current total Y distance
                 else:
                     self.drawCPC(currentClass, fig, xCoords, yCoords)  # Draw the CPC
@@ -282,7 +382,7 @@ class CenterFrame(tk.Frame):
                     yCoords.clear()
                     totalX, totalY = 0, 0
                     currentClass = currentClass + 1
-                    xCoords.append(float(self.values[i][j]))  # Store the first x-value of next class
+                    xCoords.append(float(values[i][j]))  # Store the first x-value of next class
 
         self.drawCPC(currentClass, fig, xCoords, yCoords)  # Draws the last CPC
         #plt.show()  # Displays the figure
@@ -311,7 +411,7 @@ class MainApplication(tk.Frame):
         self.master = master  # reference to the master widget, the tk window
 
         # Call classes to create frames
-        self.topFrame = TopFrame(self)
+        #self.topFrame = TopFrame(self)
         self.bottomFrame = BottomFrame(self)
         self.centerFrame = CenterFrame(self, self.bottomFrame)
 
@@ -323,7 +423,7 @@ class MainApplication(tk.Frame):
         # root.grid_columnconfigure(0, weight=1)
 
         # Set frames in position
-        self.topFrame.grid(row=0, sticky="ew")
+        #self.topFrame.grid(row=0, sticky="ew")
         self.centerFrame.grid(row=1, sticky="nsew")
         self.bottomFrame.grid(row=2, sticky="ew")
         root.config(menu=self.menubar)
@@ -333,9 +433,9 @@ class MainApplication(tk.Frame):
 
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label="New")
-        self.filemenu.add_command(label="Open")
-        self.filemenu.add_command(label="Save")
-        self.filemenu.add_command(label="Save as...")
+        self.filemenu.add_command(label="Open", command=self.centerFrame.openFile)
+        self.filemenu.add_command(label="Save", command=self.centerFrame.saveFile)
+        #self.filemenu.add_command(label="Save as...")
         self.filemenu.add_command(label="Close")
         self.filemenu.add_separator() # adds a line ---
         self.filemenu.add_command(label="Exit", command=self.quit)
@@ -346,6 +446,7 @@ class MainApplication(tk.Frame):
         self.viewmenu.add_command(label="Seperated CPC(s)", command=self.centerFrame.cpcAPI2)
         self.viewmenu.add_separator()  # adds a line ---
         self.viewmenu.add_command(label="Shifted Paired Coordinates (SPC)", command=self.centerFrame.spcAPI)
+        self.viewmenu.add_command(label="Seperated SPC(s)", command=self.centerFrame.spcAPI2)
         self.menubar.add_cascade(label="View", menu=self.viewmenu) # add the VIEW menu
 
         self.editmenu = tk.Menu(self.menubar, tearoff=0)
