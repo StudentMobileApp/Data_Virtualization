@@ -5,7 +5,6 @@
 import csv  # This section sets up the program and reads the file into values[][]
 import sys
 import math
-import pandas as pd
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
@@ -39,8 +38,8 @@ class project(object):
         fig = plt.figure(figsize=(7, 7))                                                # Sizing the subplots and spacing
         fig.subplots_adjust(hspace=0.5)
         plt.title("Collocated Paired Coordinates")
-        plt.xlabel("x")
-        plt.ylabel("y")
+        plt.xlabel("X")
+        plt.ylabel("Y")
 
         for i in range(1, (xLength - 1)):                                               # Exclude IDS from data
             yLength = len(values[i])                                                    # Number of columns
@@ -59,7 +58,7 @@ class project(object):
                     totalX, totalY = 0, 0
                     currentClass = currentClass + 1
                     xCoords.append(float(values[i][j]))                                 # Store the first x-value of next class
-
+                    totalX = float(values[i][j])
         plt.plot(xCoords, yCoords, '--o', label="Class: " + str(currentClass))
         plt.legend()
         plt.show()                                                                      # Displays the figure
