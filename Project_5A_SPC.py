@@ -76,7 +76,6 @@ class project(object):
                     ogX.append(float(values[i][j]))                                                  # Store the first x-value of next class
 
         self.drawSPC(currentClass, fig, ogX, ogY)                                                    # Draw the last SPC (not included in for loop)
-        fig.subplots_adjust(wspace=1, hspace=0.5)
         fig.tight_layout()
         plt.show()                                                                                   # Displays the figure
         
